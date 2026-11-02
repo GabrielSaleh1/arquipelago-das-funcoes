@@ -299,3 +299,279 @@ textarea { width: 100%; resize: vertical; border: var(--line); border-radius: 12
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* =============================================================
+   ADAPTAÇÃO PARA CELULAR — baseada nos arquivos atuais do REDMAT
+   Controles de toque, interface compacta e painéis legíveis.
+   As regras matemáticas e os controles de teclado são preservados.
+   ============================================================= */
+.mobile-controls { display: none; }
+.mobile-rotate-hint { display: none; }
+.mobile-mission-tabs { display: none; }
+
+body.mobile-touch {
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+body.mobile-touch #game-canvas {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+body.mobile-touch button,
+body.mobile-touch .mobile-pad { touch-action: manipulation; }
+
+body.mobile-touch .mobile-controls:not([hidden]) {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  display: block;
+  pointer-events: none !important;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.mobile-pad {
+  position: absolute;
+  left: max(14px, env(safe-area-inset-left));
+  bottom: max(12px, env(safe-area-inset-bottom));
+  width: 145px;
+  height: 149px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 3px;
+  touch-action: none !important;
+  pointer-events: auto !important;
+}
+.mobile-pad-ring {
+  width: 111px;
+  height: 111px;
+  border: 2px solid rgba(255, 255, 255, .94);
+  border-radius: 50%;
+  background: rgba(16, 48, 60, .42);
+  box-shadow: 0 4px 18px rgba(10, 35, 43, .18), inset 0 0 0 7px rgba(255,255,255,.12);
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.mobile-pad-ring::before, .mobile-pad-ring::after {
+  content: '';
+  position: absolute;
+  background: rgba(255,255,255,.25);
+}
+.mobile-pad-ring::before { height: 2px; width: 64%; }
+.mobile-pad-ring::after { width: 2px; height: 64%; }
+.mobile-pad-knob {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 28%, #a9fff0, #35c7b6 70%);
+  border: 3px solid white;
+  box-shadow: 0 4px 0 rgba(16,48,60,.35);
+  z-index: 1;
+  will-change: transform;
+}
+.mobile-pad-hint {
+  color: #fff;
+  font: 900 10px var(--display);
+  text-shadow: 0 1px 3px rgba(0,0,0,.7);
+  letter-spacing: .09em;
+}
+.mobile-actions {
+  position: absolute;
+  right: max(18px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 11px;
+  pointer-events: none;
+}
+.mobile-actions-row { display: flex; gap: 13px; align-items: flex-end; }
+.mobile-actions button {
+  touch-action: manipulation;
+  pointer-events: auto;
+  color: #102c39;
+  border: 3px solid #fff;
+  background: #fbfeff;
+  box-shadow: 0 4px 0 rgba(13,55,66,.75), 0 5px 15px rgba(13,55,66,.18);
+  font: 900 12px var(--display);
+  letter-spacing: .015em;
+  display: grid;
+  place-items: center;
+  min-width: 66px;
+  min-height: 64px;
+  border-radius: 50%;
+  padding: 9px;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.mobile-actions button:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(13,55,66,.65); }
+.mobile-actions .mobile-jump { background: #ff6059; color: #fff; width: 79px; height: 79px; }
+.mobile-actions .mobile-run { background: #e5fff6; width: 69px; height: 69px; }
+.mobile-actions .mobile-run.is-running { background: #ffe07b; }
+.mobile-actions .mobile-interact {
+  border-radius: 19px;
+  padding: 11px 21px;
+  min-height: 47px;
+  font-size: 12px;
+  background: #42edbb;
+  animation: mobile-signal 1.6s ease-in-out infinite;
+}
+@keyframes mobile-signal { 50% { filter: brightness(1.12); } }
+.mobile-reset {
+  min-height: 44px;
+}
+body.mobile-touch .controls-short { display: none !important; }
+body.mobile-touch .hud-top { top: max(9px, env(safe-area-inset-top)); left: max(9px, env(safe-area-inset-left)); }
+body.mobile-touch .hud-actions { top: max(9px, env(safe-area-inset-top)); right: max(9px, env(safe-area-inset-right)); }
+body.mobile-touch .brand { border-width: 2px; border-radius: 12px; padding: 5px 9px 5px 6px; gap: 7px; box-shadow: 0 3px 0 rgba(16,48,60,.52); }
+body.mobile-touch .brand-mark { width: 29px; height: 29px; border-width: 2px; border-radius: 9px; font-size: 14px; }
+body.mobile-touch .brand small { font-size: 8px; letter-spacing: .02em; }
+body.mobile-touch .brand b { font-size: 12px; max-width: 165px; line-height: 1.08; }
+body.mobile-touch .chapter-pill { display: none; }
+body.mobile-touch .hud-actions .progress-dots { display: none; }
+body.mobile-touch .pill-btn, body.mobile-touch .icon-btn {
+  min-height: 40px; padding: 8px 10px; border: 2px solid var(--ink); border-radius: 11px;
+  font-size: 12px; box-shadow: 0 3px 0 rgba(16,48,60,.6);
+}
+body.mobile-touch .icon-btn { min-width: 40px; font-size: 19px; }
+body.mobile-touch .objective {
+  top: calc(max(9px, env(safe-area-inset-top)) + 55px);
+  bottom: auto;
+  left: max(9px, env(safe-area-inset-left));
+  max-width: min(315px, calc(100vw - 18px));
+  width: max-content;
+  border-width: 2px;
+  border-radius: 13px;
+  box-shadow: 0 3px 0 rgba(16,48,60,.55);
+  padding: 7px 11px 8px 15px;
+  max-height: 74px;
+  overflow: hidden;
+}
+body.mobile-touch .objective::before { width: 5px; }
+body.mobile-touch .objective small { font-size: 9px; margin: 0 0 2px; }
+body.mobile-touch .objective p { font-size: 11px; line-height: 1.25; font-weight: 700; }
+body.mobile-touch .prompt { display: none !important; }
+body.mobile-touch .toast {
+  top: calc(max(9px, env(safe-area-inset-top)) + 54px);
+  max-width: min(345px, 90vw);
+  font-size: 12px;
+  padding: 8px 11px;
+  border-width: 2px;
+}
+body.mobile-touch .mobile-rotate-hint {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  max-width: 230px;
+  font: 700 11px/1.4 var(--display);
+  color: white;
+  text-shadow: 0 1px 4px #1b526a;
+  background: rgba(16,48,60,.45);
+  border-radius: 15px;
+  padding: 10px;
+  pointer-events: none;
+  text-align: center;
+  opacity: 0;
+}
+
+/* Telas modais: uma aba para testes e outra para a questão atual. */
+body.mobile-touch .overlay { padding: 7px; align-items: center; }
+body.mobile-touch .modal {
+  width: min(690px, 100%);
+  max-height: calc(100dvh - 14px);
+  border-width: 2px;
+  border-radius: 16px;
+  box-shadow: 0 4px 0 rgba(16,48,60,.5);
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+body.mobile-touch .modal-head { padding: 12px 15px; gap: 8px; }
+body.mobile-touch .modal-head h2 { font-size: clamp(17px, 4vw, 23px); margin-top: 2px; }
+body.mobile-touch .modal-head .eyebrow { font-size: 10px; }
+body.mobile-touch .close-btn { min-width: 40px; min-height: 40px; }
+body.mobile-touch .modal-body { padding: 13px 15px 18px; }
+body.mobile-touch .modal-sub { margin-bottom: 10px; font-size: 13px; line-height: 1.45; }
+body.mobile-touch .mobile-mission-split { display: block; }
+body.mobile-touch .mobile-mission-tabs {
+  display: flex;
+  gap: 5px;
+  background: #e0eff0;
+  padding: 5px;
+  margin: 3px 0 12px;
+  border-radius: 13px;
+}
+body.mobile-touch .mobile-mission-tabs button {
+  flex: 1;
+  min-height: 42px;
+  border: none;
+  background: transparent;
+  border-radius: 9px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 900;
+}
+body.mobile-touch .mobile-mission-tabs button[aria-selected="true"] { background: #fff; color: var(--ink); box-shadow: 0 2px 6px rgba(20,50,60,.12); }
+body.mobile-touch .mobile-mission-split[data-active-tab="experiment"] > .mobile-challenge-panel,
+body.mobile-touch .mobile-mission-split[data-active-tab="challenge"] > .mobile-experiment-panel { display: none; }
+body.mobile-touch .subpanel { border-width: 2px; padding: 14px; }
+body.mobile-touch .question-card { border-width: 2px; padding: 13px; min-height: 0; }
+body.mobile-touch .question-card h3 { font-size: 20px; }
+body.mobile-touch .primary, body.mobile-touch .secondary, body.mobile-touch .ghost,
+body.mobile-touch .choice-btn { min-height: 44px; border-width: 2px; }
+body.mobile-touch input, body.mobile-touch textarea { font-size: 16px; }
+body.mobile-touch .records { grid-template-columns: repeat(3, minmax(0,1fr)); }
+body.mobile-touch .teacher-grid, body.mobile-touch .keymap { grid-template-columns: 1fr; }
+body.mobile-touch .keymap div { font-size: 12px; }
+body.mobile-touch .keymap kbd { max-width: 160px; text-align: center; white-space: normal; }
+body.mobile-touch .graph-wrap { width: 100%; }
+body.mobile-touch .graph-wrap canvas { height: auto; }
+body.mobile-touch .answer-row > * { min-height: 45px; }
+body.mobile-touch .answer-row button { white-space: normal; }
+
+/* Tela inicial reorganizada para não exigir uma largura de computador. */
+body.mobile-touch .screen { padding: 7px; }
+body.mobile-touch .welcome {
+  width: min(780px, 100%);
+  min-height: 0;
+  max-height: calc(100dvh - 14px);
+  border-width: 2px;
+  border-radius: 17px;
+  overflow-y: auto;
+  grid-template-columns: 1.3fr .7fr;
+}
+body.mobile-touch .welcome-copy { padding: 20px; }
+body.mobile-touch .welcome h1 { font-size: clamp(28px, 5vw, 43px); margin: 6px 0 9px; }
+body.mobile-touch .welcome p { font-size: 13px; line-height: 1.45; margin-bottom: 13px; }
+body.mobile-touch .welcome-buttons { max-width: none; gap: 9px; }
+body.mobile-touch .welcome-buttons button { padding: 9px 11px; min-height: 44px; font-size: 13px; }
+body.mobile-touch .welcome-foot { font-size: 10px; margin-top: 10px; }
+body.mobile-touch .welcome-art { display: block; }
+body.mobile-touch .welcome-art img { height: 78%; }
+body.mobile-touch .art-bubble { display: none; }
+body.mobile-touch .art-caption { font-size: 10px; }
+
+@media (pointer: coarse) and (orientation: portrait) {
+  body.mobile-touch .mobile-rotate-hint { opacity: 1; top: 46%; }
+  body.mobile-touch .mobile-pad { transform: scale(.86); transform-origin: left bottom; }
+  body.mobile-touch .mobile-actions { transform: scale(.88); transform-origin: right bottom; }
+  body.mobile-touch .welcome { grid-template-columns: 1fr; max-width: 480px; }
+  body.mobile-touch .welcome-copy { padding: 18px 19px; }
+  body.mobile-touch .welcome-art { height: 135px; border: 0; border-top: 2px solid var(--ink); }
+  body.mobile-touch .welcome-art img { height: 180px; width: auto; top: -29px; bottom: auto; }
+  body.mobile-touch .art-caption { display: none; }
+}
+@media (pointer: coarse) and (max-height: 430px) and (orientation: landscape) {
+  body.mobile-touch .welcome-copy { padding: 13px 17px; }
+  body.mobile-touch .welcome h1 { font-size: 28px; }
+  body.mobile-touch .welcome p { font-size: 12px; line-height: 1.3; }
+  body.mobile-touch .mobile-pad { transform: scale(.82); transform-origin: left bottom; }
+  body.mobile-touch .mobile-actions { transform: scale(.81); transform-origin: right bottom; }
+  body.mobile-touch .objective { max-height: 56px; max-width: 275px; }
+  body.mobile-touch .objective p { font-size: 10px; }
+  body.mobile-touch .mobile-rotate-hint { display: none; }
+}

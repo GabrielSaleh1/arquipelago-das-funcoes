@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { G, TAU, disposeTree } from './utils3d.js'
 import { createEnvironment, buildChapterWorld, createMarker } from './mundo.js'
 import { createMatinho } from './matinho.js'
+import { isMobileTouch, setupMobileControls } from './mobile.js'
 import './style.css'
 
 /* ARQUIPÉLAGO DAS FUNÇÕES · REDMAT · 1.0
@@ -120,7 +121,7 @@ app.innerHTML=`<div id="canvas-host"></div><div id="ui">
         ${btn('Começar do início','new-button','secondary')}
         ${btn('Guia para professores','welcome-teacher','ghost')}
       </div>
-      <span class="welcome-foot">Gratuito · funciona no navegador · progresso salvo neste dispositivo</span>
+      <span class="welcome-foot">Gratuito · funciona no navegador · progresso salvo neste dispositivo${isMobileTouch?' · prefira a tela na horizontal':''}</span>
     </div>
     <div class="welcome-art">
       <div class="art-bubble">Olá! Eu sou o Matinho. Vamos descobrir a regra das máquinas?</div>
@@ -155,8 +156,8 @@ document.title='Arquipélago das Funções · REDMAT'
 scene = new THREE.Scene()
 camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.1,700)
 camera.position.set(0,6,18)
-renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'})
-renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.8))
+renderer=new THREE.WebGLRenderer({antialias:!isMobileTouch,powerPreference:'high-performance'})
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,isMobileTouch?1.25:1.8))
 renderer.setSize(innerWidth,innerHeight)
 renderer.outputColorSpace=THREE.SRGBColorSpace
 renderer.toneMapping=THREE.ACESFilmicToneMapping
@@ -176,6 +177,11 @@ controls.maxPolarAngle=1.41
 controls.target.set(0,1.7,5)
 controls.update()
 env=createEnvironment(scene)
+// Sombras com resolução menor no celular para poupar GPU/bateria.
+if (isMobileTouch) {
+  const shadowLight=scene.children.find(o=>o.isDirectionalLight&&o.castShadow)
+  if (shadowLight) shadowLight.shadow.mapSize.set(1024,1024)
+}
 marker=createMarker(scene)
 matinho=createMatinho(scene,G)
 player=matinho.group
@@ -348,7 +354,8 @@ function renderMission(){
  openModal(`${header(`ILHA ${currentChapter+1} · INVESTIGAÇÃO 01`,'A máquina misteriosa')}
  <div class="modal-body"><p class="modal-sub">A máquina transforma entradas em saídas. Experimente e construa uma explicação antes de conhecer a regra matemática.</p>
  <div class="split">${testPanel()}<div>${missionBody()}</div></div>
- <div class="statline"><span class="chip">${phaseLabel(phase)}</span><span>Explore sem pressa. Pressione Esc para observar o cenário.</span></div></div>`,{type:'mission',size:'wide'})
+ <div class="statline"><span class="chip">${phaseLabel(phase)}</span><span>Explore sem pressa. Feche o painel para observar o cenário.</span></div></div>`,{type:'mission',size:'wide'})
+ mobileControls?.enhanceMission(byId('modal'),phase)
  byId('experiment-button').onclick=()=>{
     const el=byId('experiment-input'),v=Number(el.value),[min,max]=chapter().domain
     if(el.value.trim()===''||!Number.isInteger(v)||v<min||v>max){toast(`Escolha um número inteiro entre ${min} e ${max}.`);el.focus();return}
@@ -537,15 +544,16 @@ function showMenu(){
  openModal(`${header('EXPLORAÇÃO · CONFIGURAÇÕES','Menu da aventura')}
  <div class="modal-body"><p class="modal-sub">Seu progresso é salvo automaticamente neste navegador. Você pode interromper e continuar depois.</p>
  <div class="keymap">
- <div><span>Movimentar o Matinho</span><kbd>W A S D / ↑ ↓ ← →</kbd></div>
- <div><span>Girar a câmera</span><kbd>Mouse</kbd></div>
- <div><span>Interagir</span><kbd>E</kbd></div><div><span>Pular / correr</span><kbd>Espaço / Shift</kbd></div>
- <div><span>Diário de bordo</span><kbd>N</kbd></div><div><span>Recolocar personagem</span><kbd>R</kbd></div>
+ <div><span>Movimentar o Matinho</span><kbd>${isMobileTouch?'Analógico na tela':'W A S D / ↑ ↓ ← →'}</kbd></div>
+ <div><span>Girar a câmera</span><kbd>${isMobileTouch?'Arrastar na tela':'Mouse'}</kbd></div>
+ <div><span>Interagir</span><kbd>${isMobileTouch?'Botão Interagir':'E'}</kbd></div><div><span>Pular / correr</span><kbd>${isMobileTouch?'Botões na tela':'Espaço / Shift'}</kbd></div>
+ <div><span>Diário de bordo</span><kbd>${isMobileTouch?'Botão Diário':'N'}</kbd></div><div><span>Recolocar personagem</span><kbd>${isMobileTouch?'Menu':'R'}</kbd></div>
  </div><div class="btn-row" style="margin-top:22px">
  ${btn('Voltar a explorar','menu-resume')}${btn('Guia do professor','menu-teacher','secondary')}
  ${btn(soundOn?'Som: ligado':'Som: desligado','menu-sound','secondary')}${btn('Recomeçar jogo','menu-reset','ghost')}</div>
  <p class="tiny" style="margin-top:18px">Para publicar gratuitamente, veja o arquivo LEIA-ME.txt incluído no projeto.</p>
  </div>`,{type:'menu',size:'slim'})
+ if(isMobileTouch)mobileControls?.attachResetButton()
  byId('menu-resume').onclick=closeModal
  byId('menu-teacher').onclick=()=>showTeacher()
  byId('menu-sound').onclick=e=>{soundOn=!soundOn;try{localStorage.setItem(SOUND_KEY,soundOn?'on':'off')}catch{};e.target.textContent=soundOn?'Som: ligado':'Som: desligado';sfx('click')}
@@ -559,11 +567,32 @@ function showMenu(){
 loadChapter(state.chapter)
 byId('hud-top').hidden=true;byId('hud-actions').hidden=true
 byId('objective').hidden=true;byId('controls-short').hidden=true
+// O arquivo mobile.js acrescenta controles de toque sem afetar o teclado.
+let mobileControls
+mobileControls=setupMobileControls({
+  onInteract: () => interactNearby(),
+  onJump: () => jumpPlayer(),
+  onReset: () => resetPlayer()
+})
 const direction=new THREE.Vector3(),forward=new THREE.Vector3(),right=new THREE.Vector3()
 const up=new THREE.Vector3(0,1,0),oldTarget=new THREE.Vector3(),newTarget=new THREE.Vector3()
 function resetPlayer(){
  player.position.set(0,G,6.3);player.rotation.y=Math.PI;jumpSpeed=0;grounded=true;matinho.reset();resetCamera()
  toast('Matinho voltou ao caminho inicial.')
+}
+function jumpPlayer() {
+ if (openPanel || busy || !byId('welcome-screen').classList.contains('hidden') || !grounded) return
+ jumpSpeed=6.2;grounded=false;sfx('jump')
+}
+function interactNearby() {
+ if (openPanel || busy || !byId('welcome-screen').classList.contains('hidden')) return
+ const near=nearest()
+ if (!near) return
+ player.rotation.y=Math.atan2(near.x-player.position.x,near.z-player.position.z)
+ sfx('click')
+ if (near.kind==='machine') renderMission()
+ else if (near.kind==='bridge') renderBridge()
+ else travel()
 }
 window.addEventListener('keydown',event=>{
  const k=event.key.toLowerCase()
@@ -575,26 +604,26 @@ window.addEventListener('keydown',event=>{
  if(busy)return
  if(k==='p'||k==='escape'){event.preventDefault();showMenu();return}
  if(k==='n'){event.preventDefault();showNotebook();return}
- if(k==='e'&&!event.repeat){const near=nearest();if(near){event.preventDefault();player.rotation.y=Math.atan2(near.x-player.position.x,near.z-player.position.z);sfx('click');if(near.kind==='machine')renderMission();else if(near.kind==='bridge')renderBridge();else travel()}return}
+ if(k==='e'&&!event.repeat){event.preventDefault();interactNearby();return}
  if(k==='r'){event.preventDefault();resetPlayer();return}
  if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k))event.preventDefault()
  keys.add(k)
- if(k===' '&&grounded){jumpSpeed=6.2;grounded=false;sfx('jump')}
+ if(k===' ')jumpPlayer()
 })
 window.addEventListener('keyup',event=>keys.delete(event.key.toLowerCase()))
-window.addEventListener('blur',()=>keys.clear())
+window.addEventListener('blur',()=>{keys.clear();mobileControls.release()})
 function movePlayer(dt){
  forward.subVectors(controls.target,camera.position);forward.y=0
  if(forward.lengthSq()<.001)forward.set(0,0,-1)
  forward.normalize();right.crossVectors(forward,up).normalize()
- const v=Number(keys.has('w')||keys.has('arrowup'))-Number(keys.has('s')||keys.has('arrowdown'))
- const h=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('arrowleft'))
+ const v=Number(keys.has('w')||keys.has('arrowup'))-Number(keys.has('s')||keys.has('arrowdown'))+mobileControls.input.y
+ const h=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('arrowleft'))+mobileControls.input.x
  direction.copy(forward).multiplyScalar(v).addScaledVector(right,h)
  const walking=direction.lengthSq()>.01
- pose.walking=walking;pose.running=walking&&keys.has('shift')
+ pose.walking=walking;pose.running=walking&&(keys.has('shift')||mobileControls.input.sprint)
  if(walking){
    direction.normalize()
-   const speed=(keys.has('shift')?7.5:4.4)*dt
+   const speed=(pose.running?7.5:4.4)*dt
    const nx=player.position.x+direction.x*speed,nz=player.position.z+direction.z*speed
    // Resolve os eixos separadamente: permite caminhar junto às bordas.
    if(safeToWalk(nx,nz)){player.position.x=nx;player.position.z=nz}
@@ -647,6 +676,7 @@ function updatePrompt(){
 function tick(){
  const now=performance.now(),dt=Math.min((now-lastTime)/1000,.05);lastTime=now;time+=dt
  const playing=byId('welcome-screen').classList.contains('hidden')
+ mobileControls.update({active:playing&&!openPanel&&!busy,nearby:playing&&!openPanel&&!busy?nearest():null})
  if(!openPanel&&playing&&!busy)movePlayer(dt);else{pose.walking=false;pose.running=false}
  pose.panel=!!openPanel
  matinho.update(dt,time,pose)
